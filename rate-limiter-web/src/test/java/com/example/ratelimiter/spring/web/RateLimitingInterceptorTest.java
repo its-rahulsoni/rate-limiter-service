@@ -4,15 +4,13 @@ import com.example.ratelimiter.spring.config.RateLimitConfigProvider;
 import com.example.ratelimiter.spring.limiter.RateLimiter;
 import com.example.ratelimiter.spring.model.KeyType;
 import com.example.ratelimiter.spring.model.RateLimiterRule;
+import com.example.ratelimiter.spring.resolver.KeyResolverFactory;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mockito;
 
 import java.io.PrintWriter;
-import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;

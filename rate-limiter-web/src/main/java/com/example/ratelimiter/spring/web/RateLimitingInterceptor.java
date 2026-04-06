@@ -4,6 +4,7 @@ import com.example.ratelimiter.spring.config.RateLimitConfigProvider;
 import com.example.ratelimiter.spring.limiter.RateLimiter;
 import com.example.ratelimiter.spring.model.KeyType;
 import com.example.ratelimiter.spring.model.RateLimiterRule;
+import com.example.ratelimiter.spring.resolver.KeyResolverFactory;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Component;

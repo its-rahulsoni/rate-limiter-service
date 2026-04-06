@@ -1,4 +1,4 @@
-package com.example.ratelimiter.spring.web;
+package com.example.ratelimiter.spring.resolver;
 
 import com.example.ratelimiter.spring.model.RateLimiterRule;
 import jakarta.servlet.http.HttpServletRequest;
