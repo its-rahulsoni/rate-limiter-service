@@ -1,0 +1,29 @@
+# Default ignored files
+/shelf/
+/.idea/workspace.xml
+
+# IntelliJ IDEA
+.idea/
+*.iml
+
+# Maven target folder
+target/
+
+# Logs
+*.log
+logs/
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Eclipse/VS Code
+.classpath
+.project
+.settings/
+.vscode/
+
+# Build artifacts
+*.jar
+*.war
+*.ear

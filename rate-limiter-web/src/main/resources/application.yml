@@ -1,0 +1,16 @@
+rate-limiter:
+  capacity: 10
+  refill-rate: 5
+  interceptor-enabled: true
+  aspect-enabled: true
+  algorithm: token-bucket
+  rules:
+    - keyType: IP
+      limit: 100
+      window: 60
+      algorithm: SLIDING_WINDOW_LOG
+    - keyType: HEADER
+      headerName: X-API-KEY
+      limit: 50
+      window: 60
+      algorithm: TOKEN_BUCKET
