@@ -1,0 +1,250 @@
+Great — now you’re thinking at the **system validation level**, not just code correctness 👌
+
+What you want is:
+
+> ❓ “Is my **entire request flow** (Java → Redis → Lua → Response) correct and complete?”
+
+Copilot won’t do this automatically unless you **force it into a reviewer + simulator mindset**.
+
+---
+
+# 🚀 How to Make Copilot Verify End-to-End Flow
+
+You need to guide it through **4 layers**:
+
+1. Contract validation
+2. Flow simulation
+3. Edge-case testing
+4. Failure-mode analysis
+
+---
+
+# 🧩 Prompt 1 — Full System Understanding (VERY IMPORTANT)
+
+You are a senior backend engineer.
+
+Analyze the complete rate limiting flow across:
+
+1. Java (TokenBucketAlgorithm)
+2. Redis Lua script (Token Bucket implementation)
+
+Tasks:
+
+1. Explain the full request flow step-by-step:
+
+   * How Java constructs arguments
+   * How Lua processes them
+   * How response is interpreted
+
+2. Verify that:
+
+   * argument contract is consistent
+   * time units are consistent
+   * refill_rate is correctly computed and used
+
+3. Identify any mismatches or hidden bugs across layers
+
+Be critical and assume this is a production system under high load.
+
+---
+
+# 🧠 Prompt 2 — Simulate Real Requests (This is GOLD)
+
+Simulate the behavior of this rate limiter end-to-end.
+
+Assume:
+
+* capacity = 10
+* refill_rate = 5 tokens/sec
+
+Simulate the following request sequence:
+
+1. 10 immediate requests at t=0
+2. 5 requests at t=1 second
+3. 10 requests at t=2 seconds
+
+For each request:
+
+* Show tokens before request
+* Whether request is allowed
+* Tokens after request
+* retry_after (if rejected)
+
+Explain whether the behavior matches expected Token Bucket semantics.
+
+👉 This forces Copilot to **execute your system mentally**
+
+---
+
+# 🧪 Prompt 3 — Edge Case Simulation
+
+Test this rate limiter with edge cases:
+
+1. Very small refill_rate (e.g., 0.1 tokens/sec)
+2. Very large capacity (e.g., 1,000,000)
+3. Burst traffic (100 requests at same timestamp)
+4. Long idle period (no requests for 1 hour)
+
+For each case:
+
+* Simulate behavior
+* Identify correctness issues
+* Highlight any unexpected results
+
+Focus on real-world production behavior.
+
+---
+
+# ⚠️ Prompt 4 — Failure Mode Analysis (Senior Level)
+
+Analyze failure scenarios for this rate limiter:
+
+1. Redis latency spikes
+2. Redis node restart (state loss)
+3. Duplicate requests (network retries)
+4. Clock drift between services
+5. High contention on a single key
+
+For each:
+
+* Explain what happens in the current system
+* Identify risks
+* Suggest improvements if needed
+
+Think like a distributed systems engineer.
+
+---
+
+# 🔍 Prompt 5 — Contract Verification (Critical)
+
+Verify the contract between Java and Lua:
+
+1. Arguments:
+
+   * capacity
+   * refill_rate
+   * now
+
+2. Ensure:
+
+   * same time units are used everywhere
+   * refill_rate meaning is consistent
+   * no implicit conversions or mismatches
+
+3. Validate return values:
+
+   * allowed
+   * tokens
+   * retry_after
+
+Highlight any inconsistencies or ambiguity.
+
+---
+
+# 🧱 Prompt 6 — “Is This Complete?” (Direct Question)
+
+Is this Token Bucket rate limiter implementation complete for production use?
+
+Evaluate:
+
+1. Algorithm correctness
+2. Distributed system safety
+3. Performance under load
+4. Missing features (if any)
+
+Answer in 3 parts:
+
+* What is correct
+* What is missing
+* What would you improve
+
+Be brutally honest.
+
+---
+
+# 🧪 Prompt 7 — Generate Test Cases (Super Useful)
+
+Generate comprehensive test cases for this rate limiter.
+
+Include:
+
+1. Unit tests (Lua logic)
+2. Integration tests (Java + Redis)
+3. Load test scenarios
+4. Edge cases
+
+For each test:
+
+* Input
+* Expected output
+* Reasoning
+
+Focus on catching subtle bugs.
+
+---
+
+# 🧠 Prompt 8 — Observability Validation
+
+Evaluate whether this rate limiter provides enough observability.
+
+Check:
+
+* Can we debug issues from logs?
+* Are return values sufficient for monitoring?
+* What metrics should be added?
+
+Suggest improvements for production monitoring (e.g., Prometheus metrics).
+
+---
+
+# 🔥 MOST IMPORTANT (Don’t Skip This)
+
+After all of the above, run:
+
+Act as a code reviewer in a high-scale company (Google/Meta level).
+
+Would you approve this rate limiter for production?
+
+If not:
+
+* List exact reasons
+* Suggest concrete fixes
+
+Focus on real-world scalability and correctness.
+
+---
+
+# 🧠 What This Achieves
+
+These prompts force Copilot to:
+
+* ✔ Think like a **system designer**
+* ✔ Simulate behavior (not just read code)
+* ✔ Catch cross-layer bugs
+* ✔ Validate real-world correctness
+
+---
+
+# 🚀 Final Insight (Very Important)
+
+Most engineers ask:
+
+> “Is my code correct?”
+
+Senior engineers ask:
+
+> “Does my system behave correctly under stress, time, and failure?”
+
+👉 These prompts push Copilot into the **second category**
+
+---
+
+If you want next level:
+
+I can help you:
+
+* Design **load testing strategy (k6 / Gatling)**
+* Build **real traffic simulation**
+* Add **fallback limiter (in-memory + Redis hybrid)**
+
+That’s how you make this **interview + production ready**.

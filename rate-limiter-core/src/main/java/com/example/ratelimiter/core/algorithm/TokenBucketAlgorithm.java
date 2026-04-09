@@ -8,6 +8,7 @@ import io.lettuce.core.RedisException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.math.BigDecimal;
 import java.time.Clock;
 import java.util.Collections;
 import java.util.List;
@@ -18,9 +19,9 @@ import java.util.concurrent.atomic.LongAdder;
  * Token Bucket algorithm implementation using Redis and Lua.
  *
  * Lua script argument contract (order):
- *   1. capacity (tokens)
- *   2. windowMs (window in milliseconds)
- *   3. nowMs (current time in milliseconds)
+ *   1. capacity (tokens, integer)
+ *   2. refill_rate (tokens per second, float)
+ *   3. now (current timestamp in seconds, long)
  *
  * Flow:
  *
@@ -90,29 +91,35 @@ public class TokenBucketAlgorithm implements RateLimitingAlgorithm {
         String redisKey = redisKeyPrefix + keyBuilder.build(rule.getAlgorithm(), key);
         int capacity = rule.getLimit();
         int windowSeconds = rule.getWindow(); // window in seconds
-        int refillRate = capacity / windowSeconds; // tokens per second
+        double refillRate = (double) capacity / (double) windowSeconds; // tokens per second, floating point
         long nowSeconds = clock.millis() / 1000L; // current time in seconds
         // All time units in this algorithm are in seconds
+        // Use BigDecimal to avoid scientific notation when passing refillRate to Lua
+        // Scientific notation (e.g., 1.23E-4) is unsafe for Lua tonumber() parsing on some Redis/Lua versions
+        String refillRateStr = BigDecimal.valueOf(refillRate).toPlainString();
         List<String> args = List.of(
-                String.valueOf(capacity),
-                String.valueOf(refillRate),
-                String.valueOf(nowSeconds)
+                String.valueOf(capacity), // capacity: integer (tokens)
+                refillRateStr,            // refill_rate: tokens per second (float)
+                String.valueOf(nowSeconds) // now: timestamp in seconds (long)
         );
         List<String> keys = Collections.singletonList(redisKey);
         return luaScriptExecutor.executeAndParseAsync(keys, args)
             .thenApply(result -> {
                 recordLatency(start);
-                if (result == null) {
+                RateLimitResult safeResult = parseLuaResult(result, key, rule, args, redisKey);
+                if (safeResult == null) {
                     failureCount.increment();
-                    logger.warn("TokenBucketAlgorithm: Null result from Lua. key={}, rule={}, algorithm=TOKEN_BUCKET", key, rule);
+                    logger.error("[RateLimiter] Invalid Lua result. key={}, redisKey={}, rule={}, args={}, rawResponse={}", key, redisKey, rule, args, result);
                     return fallbackResult(rule);
                 }
-                if (result.isAllowed()) {
+                if (safeResult.isAllowed()) {
                     successCount.increment();
+                    logger.info("[RateLimiter] ALLOWED key={} redisKey={} rule={} tokensLeft={} retryAfter={}", key, redisKey, rule, safeResult.getRemaining(), safeResult.getRetryAfter());
                 } else {
                     blockedCount.increment();
+                    logger.info("[RateLimiter] REJECTED key={} redisKey={} rule={} tokensLeft={} retryAfter={}", key, redisKey, rule, safeResult.getRemaining(), safeResult.getRetryAfter());
                 }
-                return result;
+                return safeResult;
             })
             .exceptionally(ex -> {
                 recordLatency(start);
@@ -171,6 +178,64 @@ public class TokenBucketAlgorithm implements RateLimitingAlgorithm {
             cause = cause.getCause();
         }
         return false;
+    }
+
+    /**
+     * Robustly parses the Lua script result, ensuring type safety and defensive checks.
+     * If validation fails, logs error and returns null.
+     */
+    @SuppressWarnings("unchecked")
+    private RateLimitResult parseLuaResult(Object result, String key, RateLimiterRule rule, List<String> args, String redisKey) {
+        if (result == null) {
+            logger.error("[RateLimiter] Lua result is null. key={}, redisKey={}, rule={}, args={}", key, redisKey, rule, args);
+            return null;
+        }
+        if (!(result instanceof List<?>)) {
+            logger.error("[RateLimiter] Lua result is not a List. key={}, redisKey={}, rule={}, args={}, result={}", key, redisKey, rule, args, result);
+            return null;
+        }
+        List<?> list = (List<?>) result;
+        if (list.size() != 5) {
+            logger.error("[RateLimiter] Lua result does not have 5 elements. key={}, redisKey={}, rule={}, args={}, result={}", key, redisKey, rule, args, list);
+            return null;
+        }
+        try {
+            Integer allowed = toInt(list.get(0));
+            Integer tokens = toInt(list.get(1));
+            Integer retryAfter = toInt(list.get(2));
+            Integer capacity = toInt(list.get(3));
+            Long now = toLong(list.get(4));
+            if (allowed == null || tokens == null || retryAfter == null || capacity == null || now == null) {
+                logger.error("[RateLimiter] Lua result contains null or invalid types. key={}, redisKey={}, rule={}, args={}, result={}", key, redisKey, rule, args, list);
+                return null;
+            }
+            return new RateLimitResult(allowed == 1, tokens, retryAfter, capacity);
+        } catch (Exception e) {
+            logger.error("[RateLimiter] Exception parsing Lua result. key={}, redisKey={}, rule={}, args={}, result={}", key, redisKey, rule, args, list, e);
+            return null;
+        }
+    }
+
+    private Integer toInt(Object obj) {
+        if (obj == null) return null;
+        if (obj instanceof Integer) return (Integer) obj;
+        if (obj instanceof Long) return ((Long) obj).intValue();
+        if (obj instanceof String) {
+            try { return Integer.parseInt((String) obj); } catch (NumberFormatException ignored) {}
+        }
+        if (obj instanceof Number) return ((Number) obj).intValue();
+        return null;
+    }
+
+    private Long toLong(Object obj) {
+        if (obj == null) return null;
+        if (obj instanceof Long) return (Long) obj;
+        if (obj instanceof Integer) return ((Integer) obj).longValue();
+        if (obj instanceof String) {
+            try { return Long.parseLong((String) obj); } catch (NumberFormatException ignored) {}
+        }
+        if (obj instanceof Number) return ((Number) obj).longValue();
+        return null;
     }
 
     // Metrics accessors
