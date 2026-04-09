@@ -1,6 +1,6 @@
 package com.example.ratelimiter.spring.web;
 
-import com.example.ratelimiter.spring.model.RateLimiterRule;
+import com.example.ratelimiter.common.models.RateLimiterRule;
 import com.example.ratelimiter.spring.resolver.CustomKeyResolver;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.Test;

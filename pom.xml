@@ -12,11 +12,12 @@
 	<artifactId>rate-limiter-service</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<packaging>pom</packaging>
-	<name>rate-limiter-service</name>
+	<name>Rate Limiter Service</name>
 	<description>Service to implement Rate Limiter with Spring Boot</description>
 	<modules>
 		<module>rate-limiter-core</module>
 		<module>rate-limiter-web</module>
+		<module>rate-limiter-common</module>
 	</modules>
 	<properties>
 		<java.version>17</java.version>

@@ -1,9 +1,9 @@
 package com.example.ratelimiter.spring.web;
 
+import com.example.ratelimiter.common.enums.KeyType;
+import com.example.ratelimiter.common.models.RateLimiterRule;
 import com.example.ratelimiter.spring.config.RateLimitConfigProvider;
 import com.example.ratelimiter.spring.limiter.RateLimiter;
-import com.example.ratelimiter.spring.model.KeyType;
-import com.example.ratelimiter.spring.model.RateLimiterRule;
 import com.example.ratelimiter.spring.resolver.KeyResolverFactory;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -41,7 +41,7 @@ class RateLimitingInterceptorTest {
     void allowsRequestWhenAllRulesPass() throws Exception {
         RateLimiterRule rule = new RateLimiterRule();
         rule.setKeyType(KeyType.IP);
-        when(configProvider.getAllRules()).thenReturn(List.of(rule));
+        when(configProvider.getGlobalRules()).thenReturn(List.of(rule));
         when(keyResolverFactory.resolveKey(eq(KeyType.IP), any(), eq(rule))).thenReturn("1.2.3.4");
         when(rateLimiter.allowRequest("1.2.3.4", rule)).thenReturn(true);
         boolean result = interceptor.preHandle(request, response, new Object());
@@ -53,7 +53,7 @@ class RateLimitingInterceptorTest {
     void rejectsRequestWhenAnyRuleFails() throws Exception {
         RateLimiterRule rule = new RateLimiterRule();
         rule.setKeyType(KeyType.IP);
-        when(configProvider.getAllRules()).thenReturn(List.of(rule));
+        when(configProvider.getGlobalRules()).thenReturn(List.of(rule));
         when(keyResolverFactory.resolveKey(eq(KeyType.IP), any(), eq(rule))).thenReturn("1.2.3.4");
         when(rateLimiter.allowRequest("1.2.3.4", rule)).thenReturn(false);
         boolean result = interceptor.preHandle(request, response, new Object());
@@ -66,7 +66,7 @@ class RateLimitingInterceptorTest {
     void skipsRuleWhenKeyIsNull() throws Exception {
         RateLimiterRule rule = new RateLimiterRule();
         rule.setKeyType(KeyType.IP);
-        when(configProvider.getAllRules()).thenReturn(List.of(rule));
+        when(configProvider.getGlobalRules()).thenReturn(List.of(rule));
         when(keyResolverFactory.resolveKey(eq(KeyType.IP), any(), eq(rule))).thenReturn(null);
         boolean result = interceptor.preHandle(request, response, new Object());
         assertTrue(result);
@@ -77,7 +77,7 @@ class RateLimitingInterceptorTest {
     void skipsRuleWhenKeyIsEmpty() throws Exception {
         RateLimiterRule rule = new RateLimiterRule();
         rule.setKeyType(KeyType.IP);
-        when(configProvider.getAllRules()).thenReturn(List.of(rule));
+        when(configProvider.getGlobalRules()).thenReturn(List.of(rule));
         when(keyResolverFactory.resolveKey(eq(KeyType.IP), any(), eq(rule))).thenReturn("");
         boolean result = interceptor.preHandle(request, response, new Object());
         assertTrue(result);

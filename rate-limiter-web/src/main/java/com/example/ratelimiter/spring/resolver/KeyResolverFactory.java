@@ -1,7 +1,7 @@
 package com.example.ratelimiter.spring.resolver;
 
-import com.example.ratelimiter.spring.model.KeyType;
-import com.example.ratelimiter.spring.model.RateLimiterRule;
+import com.example.ratelimiter.common.enums.KeyType;
+import com.example.ratelimiter.common.models.RateLimiterRule;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;

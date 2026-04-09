@@ -1,6 +1,6 @@
 package com.example.ratelimiter.spring.limiter;
 
-import com.example.ratelimiter.spring.model.RateLimiterRule;
+import com.example.ratelimiter.common.models.RateLimiterRule;
 
 public interface RateLimiter {
     /**

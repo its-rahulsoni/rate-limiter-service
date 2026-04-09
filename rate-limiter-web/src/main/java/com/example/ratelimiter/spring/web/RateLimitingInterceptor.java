@@ -1,9 +1,9 @@
 package com.example.ratelimiter.spring.web;
 
+import com.example.ratelimiter.common.enums.KeyType;
+import com.example.ratelimiter.common.models.RateLimiterRule;
 import com.example.ratelimiter.spring.config.RateLimitConfigProvider;
 import com.example.ratelimiter.spring.limiter.RateLimiter;
-import com.example.ratelimiter.spring.model.KeyType;
-import com.example.ratelimiter.spring.model.RateLimiterRule;
 import com.example.ratelimiter.spring.resolver.KeyResolverFactory;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -38,7 +38,7 @@ public class RateLimitingInterceptor implements HandlerInterceptor {
      */
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws IOException {
-        List<RateLimiterRule> rules = configProvider.getAllRules();
+        List<RateLimiterRule> rules = configProvider.getGlobalRules();
         for (RateLimiterRule rule : rules) {
             KeyType keyType = rule.getKeyType();
             String key = keyResolverFactory.resolveKey(keyType, request, rule);

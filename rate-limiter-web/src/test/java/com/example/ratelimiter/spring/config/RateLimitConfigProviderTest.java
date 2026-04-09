@@ -1,13 +1,11 @@
 package com.example.ratelimiter.spring.config;
 
-import com.example.ratelimiter.spring.model.KeyType;
-import com.example.ratelimiter.spring.model.RateLimiterRule;
+import com.example.ratelimiter.common.enums.KeyType;
+import com.example.ratelimiter.common.models.RateLimiterRule;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.function.Executable;
 
-import java.util.Arrays;
 import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -22,9 +20,10 @@ class RateLimitConfigProviderTest {
         rule.setLimit(10);
         rule.setWindow(60);
         RateLimiterProperties props = new RateLimiterProperties();
-        props.setRules(Collections.singletonList(rule));
+        // Updated for new config: rules is now a Map<String, RateLimiterRule>
+        props.setRules(Collections.singletonMap("testRule", rule));
         RateLimitConfigProvider provider = new RateLimitConfigProvider(props, validator);
-        assertEquals(1, provider.getAllRules().size());
+        assertEquals(1, provider.getRule("testRule") != null ? 1 : 0);
     }
 
     @Test
@@ -34,7 +33,7 @@ class RateLimitConfigProviderTest {
         rule.setLimit(0);
         rule.setWindow(60);
         RateLimiterProperties props = new RateLimiterProperties();
-        props.setRules(Collections.singletonList(rule));
+        props.setRules(Collections.singletonMap("testRule", rule));
         assertThrows(IllegalArgumentException.class, () -> new RateLimitConfigProvider(props, validator));
     }
 
@@ -45,7 +44,7 @@ class RateLimitConfigProviderTest {
         rule.setLimit(10);
         rule.setWindow(60);
         RateLimiterProperties props = new RateLimiterProperties();
-        props.setRules(Collections.singletonList(rule));
+        props.setRules(Collections.singletonMap("testRule", rule));
         assertThrows(IllegalArgumentException.class, () -> new RateLimitConfigProvider(props, validator));
     }
 
@@ -57,7 +56,7 @@ class RateLimitConfigProviderTest {
         rule.setWindow(60);
         rule.setHeaderName(null);
         RateLimiterProperties props = new RateLimiterProperties();
-        props.setRules(Collections.singletonList(rule));
+        props.setRules(Collections.singletonMap("testRule", rule));
         assertThrows(IllegalArgumentException.class, () -> new RateLimitConfigProvider(props, validator));
     }
 }

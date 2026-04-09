@@ -1,6 +1,6 @@
 package com.example.ratelimiter.spring.resolver;
 
-import com.example.ratelimiter.spring.model.RateLimiterRule;
+import com.example.ratelimiter.common.models.RateLimiterRule;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.stereotype.Component;
 

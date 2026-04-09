@@ -1,16 +1,35 @@
 rate-limiter:
-  capacity: 10
-  refill-rate: 5
-  interceptor-enabled: true
-  aspect-enabled: true
-  algorithm: token-bucket
+  mode: BOTH   # INTERCEPTOR | ANNOTATION | BOTH
+
+  # Default/global settings (optional)
+  default:
+    algorithm: TOKEN_BUCKET
+    capacity: 10
+    refill-rate: 5
+
+  # Named rules for annotation-based usage
   rules:
-    - keyType: IP
+    user-api:
+      keyType: IP
       limit: 100
       window: 60
       algorithm: SLIDING_WINDOW_LOG
-    - keyType: HEADER
+
+    api-key-rule:
+      keyType: HEADER
       headerName: X-API-KEY
       limit: 50
       window: 60
       algorithm: TOKEN_BUCKET
+
+  # Optional: global interceptor rules (only if using INTERCEPTOR or BOTH)
+  global-rules:
+    - keyType: IP
+      limit: 200
+      window: 60
+      algorithm: SLIDING_WINDOW_LOG
+
+  redis:
+    url: redis://localhost:6379
+    timeout: 2s
+    command-timeout: 3s

@@ -45,6 +45,11 @@
             <groupId>jakarta.validation</groupId>
             <artifactId>jakarta.validation-api</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.rate-limiter.service</groupId>
+            <artifactId>rate-limiter-common</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
         <!-- Add other dependencies as needed -->
     </dependencies>
 </project>
